@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parkings Disponibles - Parking Location</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="app-nav shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="app-nav-row flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="brand-title text-white text-xl font-bold">🅿️ ParkingLocation</span>
+                </div>
+                <button class="nav-toggle-btn" type="button" aria-label="Ouvrir le menu" aria-expanded="false" data-target="parkingsNavActions">
+                    <span aria-hidden="true">☰</span>
+                </button>
+                <div id="parkingsNavActions" class="app-nav-actions collapsible flex items-center">
+                    <span id="userGreeting" class="text-blue-100 hidden sm:block"></span>
+                    <button id="themeToggleBtn" class="btn btn-secondary text-sm" type="button">Mode sombre</button>
+                    <a href="mes-reservations.html" class="nav-action-link">Mes Réservations</a>
+                    <button id="logoutBtn" class="btn btn-danger text-sm">
+                        Déconnexion
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenu principal -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        <section class="hero-block mb-6 p-5">
+            <p class="text-xs uppercase tracking-wide text-blue-700 font-semibold mb-1">Recherche parking</p>
+            <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+                <div>
+                    <h1 class="section-title">Trouvez une place de parking</h1>
+                    <p class="section-subtitle mt-1">Recherchez plus vite avec des filtres intelligents de disponibilite et de budget.</p>
+                </div>
+                <div id="resultsCount" class="text-sm text-slate-700 bg-white border border-blue-100 px-3 py-1.5 rounded-md hidden"></div>
+            </div>
+        </section>
+
+        <button id="toggleFiltersBtn" type="button" class="mobile-panel-toggle btn btn-secondary" aria-expanded="false" aria-controls="filtersPanel">
+            Afficher les filtres
+        </button>
+
+        <div id="filtersPanel" class="panel p-4 mb-6 mobile-collapsible-panel">
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
+                <div class="md:col-span-2">
+                    <label class="filter-label" for="searchInput">Recherche</label>
+                    <input id="searchInput" type="text" aria-label="Recherche parking" placeholder="Nom ou localisation" class="control w-full">
+                </div>
+                <div>
+                    <label class="filter-label" for="availabilityFilter">Disponibilite</label>
+                    <select id="availabilityFilter" aria-label="Filtre disponibilite" class="control w-full">
+                        <option value="all">Toutes</option>
+                        <option value="available">Disponibles</option>
+                        <option value="full">Complets</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="filter-label" for="sortFilter">Tri</label>
+                    <select id="sortFilter" aria-label="Tri parkings" class="control w-full">
+                        <option value="nameAsc">Nom (A-Z)</option>
+                        <option value="priceAsc">Prix croissant</option>
+                        <option value="priceDesc">Prix decroissant</option>
+                        <option value="availabilityDesc">Plus de places</option>
+                        <option value="distanceAsc">Distance (plus proche)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="filter-label" for="minPriceInput">Prix min (TND)</label>
+                    <input id="minPriceInput" type="number" min="0" step="0.01" aria-label="Prix minimum" placeholder="0" class="control w-full">
+                </div>
+                <div>
+                    <label class="filter-label" for="maxPriceInput">Prix max (TND)</label>
+                    <input id="maxPriceInput" type="number" min="0" step="0.01" aria-label="Prix maximum" placeholder="50" class="control w-full">
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-3 mt-3">
+                <div class="md:col-span-2">
+                    <label class="filter-label" for="maxDistanceInput">Distance max (km)</label>
+                    <input id="maxDistanceInput" type="number" min="0" step="0.1" aria-label="Distance maximum" placeholder="Ex: 5" class="control w-full">
+                </div>
+                <div class="md:col-span-2 flex items-end">
+                    <button id="locateMeBtn" type="button" class="btn btn-primary w-full">Utiliser ma position</button>
+                </div>
+                <div class="md:col-span-2 flex items-end">
+                    <div class="w-full space-y-2">
+                        <div id="locationStatus" class="text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-md px-3 py-2 w-full">Position non detectee</div>
+                        <span id="gpsBadge" class="gps-badge gps-inactive">GPS inactif</span>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 flex flex-wrap items-center gap-2">
+                <span class="text-xs text-slate-500">Budget rapide:</span>
+                <button type="button" class="soft-btn text-sm price-preset-btn" data-min="" data-max="">Tous</button>
+                <button type="button" class="soft-btn text-sm price-preset-btn" data-min="0" data-max="5">0-5 TND</button>
+                <button type="button" class="soft-btn text-sm price-preset-btn" data-min="5" data-max="10">5-10 TND</button>
+                <button type="button" class="soft-btn text-sm price-preset-btn" data-min="10" data-max="">10+ TND</button>
+            </div>
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+                <button id="clearFiltersBtn" class="btn btn-secondary text-sm">Reinitialiser les filtres</button>
+                <div id="activeFilters" class="flex flex-wrap gap-2"></div>
+            </div>
+        </div>
+
+        <!-- Zone d'erreur globale -->
+        <div id="errorMessage" class="hidden alert-box alert-error mb-4" role="alert"></div>
+
+        <section class="map-panel mb-6">
+            <div class="map-panel-header">
+                <h2 class="text-lg font-bold">Carte des parkings proches</h2>
+                <p class="text-sm text-slate-600">La position est detectee automatiquement a l ouverture. Vous pouvez relancer avec le bouton "Utiliser ma position".</p>
+                <div class="mt-3 flex flex-wrap gap-2">
+                    <button id="recenterUserBtn" type="button" class="btn btn-secondary text-sm">Recentrer sur moi</button>
+                    <button id="fitAllBtn" type="button" class="btn btn-secondary text-sm">Voir tous les parkings</button>
+                </div>
+            </div>
+            <div id="parkingsMap" class="parkings-map"></div>
+        </section>
+
+        <!-- Spinner de chargement -->
+        <div id="loader" class="flex justify-center items-center py-20">
+            <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mb-4"></div>
+        </div>
+
+        <!-- Grille des parkings -->
+        <div id="parkingsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 hidden">
+            <!-- Les cartes de parking seront injectées ici par JavaScript -->
+        </div>
+
+        <!-- Message si aucun parking -->
+        <div id="emptyMessage" class="hidden card-surface text-center py-16 text-gray-500 text-lg">
+            Aucun parking n'est disponible pour le moment.
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-white py-6 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p>&copy; 2026 Parking Location. Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <script src="js/responsive-nav.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="js/config.js"></script>
+    <script src="js/parkings.js"></script>
+</body>
+</html>

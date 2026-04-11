@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S'inscrire - EasyPark</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="flex flex-col min-h-screen">
+    <nav class="app-nav p-4 shadow-md">
+        <div class="container mx-auto flex items-center justify-between gap-3">
+            <a href="index.html" class="brand-title text-white text-2xl font-bold font-serif flex items-center">EasyPark</a>
+            <div class="app-nav-actions flex items-center gap-2">
+                <button type="button" class="btn btn-secondary text-sm" data-theme-toggle aria-pressed="false">Mode sombre</button>
+                <a href="login.html" class="nav-action-link">Connexion</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex-grow flex items-center justify-center p-6">
+        <div class="auth-card p-8 w-full max-w-md">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Créer un compte</h2>
+            
+            <form id="registerForm" class="space-y-6">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700">Nom complet</label>
+                    <input type="text" id="name" required class="control mt-1 block">
+                </div>
+                
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700">Adresse Email</label>
+                    <input type="email" id="email" required class="control mt-1 block">
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700">Mot de passe</label>
+                    <input type="password" id="password" required class="control mt-1 block">
+                </div>
+
+                <div id="errorMessage" class="alert-box alert-error text-sm hidden"></div>
+                <div id="successMessage" class="alert-box alert-success text-sm hidden">Inscription réussie ! Redirection...</div>
+
+                <button type="submit" class="btn btn-primary w-full font-bold py-3 px-4 rounded-md transition duration-300 shadow-md">
+                    S'inscrire
+                </button>
+            </form>
+            
+            <p class="mt-6 text-center text-sm text-gray-600">
+                Déjà un compte ? <a href="login.html" class="text-blue-600 hover:text-blue-800 font-semibold">Connectez-vous</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="js/theme.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>

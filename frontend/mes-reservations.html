@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Réservations - Parking Location</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="flex flex-col min-h-screen reservations-page">
+
+    <nav class="app-nav shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="app-nav-row flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="brand-title text-white text-xl font-bold cursor-pointer" onclick="window.location.href='parkings.html'">🅿️ ParkingLocation</span>
+                </div>
+                <button class="nav-toggle-btn" type="button" aria-label="Ouvrir le menu" aria-expanded="false" data-target="reservationsNavActions">
+                    <span aria-hidden="true">☰</span>
+                </button>
+                <div id="reservationsNavActions" class="app-nav-actions collapsible flex items-center">
+                    <span id="userGreeting" class="text-blue-100 hidden sm:block"></span>
+                    <button type="button" class="btn btn-secondary text-sm" data-theme-toggle aria-pressed="false">Mode sombre</button>
+                    <a href="parkings.html" class="nav-action-link">Réserver</a>
+                    <button id="logoutBtn" class="btn btn-danger text-sm">Déconnexion</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 py-8 w-full">
+        <h1 class="section-title mb-6">Mes Réservations</h1>
+
+        <div id="alertMessage" class="hidden alert-box mb-4" role="alert"></div>
+
+        <div class="table-shell">
+            <table class="min-w-full divide-y divide-gray-200 mobile-stack-table">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Parking</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Début</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fin</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prix Total</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="reservationsTableBody" class="bg-white divide-y divide-gray-200">
+                    <!-- Données injectées ici -->
+                </tbody>
+            </table>
+            <div id="loading" class="page-state text-center py-6 text-gray-500">Chargement de vos réservations...</div>
+            <div id="emptyMessage" class="page-state hidden text-center py-6 text-gray-500">Vous n'avez aucune réservation pour le moment.</div>
+        </div>
+    </main>
+
+    <footer class="bg-slate-900 text-white py-5 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center text-sm">
+            <p>&copy; 2026 Parking Location. Tous droits reserves.</p>
+        </div>
+    </footer>
+
+    <script src="js/responsive-nav.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/mes-reservations.js"></script>
+</body>
+</html>

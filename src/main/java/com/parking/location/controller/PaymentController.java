@@ -1,7 +1,7 @@
 package com.parking.location.controller;
 
 import com.parking.location.dto.PaymentRequest;
-import com.parking.location.model.Payment;
+import com.parking.location.dto.PaymentResponse;
 import com.parking.location.service.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +22,7 @@ public class PaymentController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = authentication.getName();
 
-        Payment payment = paymentService.processPayment(paymentRequest.getReservationId(), userEmail);
+        PaymentResponse payment = paymentService.processPayment(paymentRequest.getReservationId(), userEmail);
         return ResponseEntity.ok(payment);
     }
 

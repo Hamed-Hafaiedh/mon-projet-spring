@@ -121,7 +121,7 @@ public class ReservationService {
 
     @Transactional
     public void cancelReservation(Long reservationId, String userEmail) {
-        Reservation reservation = reservationRepository.findById(reservationId)
+        Reservation reservation = reservationRepository.findByIdWithUserAndParking(reservationId)
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
         // Vérifier que la réservation appartient bien à l'utilisateur qui l'annule

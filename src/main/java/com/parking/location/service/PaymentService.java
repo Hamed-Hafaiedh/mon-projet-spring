@@ -1,5 +1,6 @@
 package com.parking.location.service;
 
+import com.parking.location.dto.PaymentResponse;
 import com.parking.location.model.Payment;
 import com.parking.location.model.PaymentStatus;
 import com.parking.location.model.Reservation;
@@ -8,6 +9,7 @@ import com.parking.location.repository.PaymentRepository;
 import com.parking.location.repository.ReservationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 
@@ -20,12 +22,13 @@ public class PaymentService {
     @Autowired
     private ReservationRepository reservationRepository;
 
-    public Payment processPayment(Long reservationId, String userEmail) {
+    @Transactional
+    public PaymentResponse processPayment(Long reservationId, String userEmail) {
         if (reservationId == null) {
             throw new RuntimeException("Reservation id is required");
         }
 
-        Reservation reservation = reservationRepository.findById(reservationId)
+        Reservation reservation = reservationRepository.findByIdWithUserAndParking(reservationId)
                 .orElseThrow(() -> new RuntimeException("Reservation not found"));
 
         if (!reservation.getUser().getEmail().equals(userEmail)) {
@@ -67,17 +70,33 @@ public class PaymentService {
         reservation.setStatus(ReservationStatus.CONFIRMED);
         reservationRepository.save(reservation);
 
-        return savedPayment;
+        return toPaymentResponse(savedPayment);
     }
     
-    public Payment getPaymentDetails(Long paymentId, String userEmail, boolean isAdmin) {
-        Payment payment = paymentRepository.findById(paymentId)
+    @Transactional(readOnly = true)
+    public PaymentResponse getPaymentDetails(Long paymentId, String userEmail, boolean isAdmin) {
+        Payment payment = paymentRepository.findByIdWithReservationAndUser(paymentId)
                 .orElseThrow(() -> new RuntimeException("Payment not found"));
 
         if (!isAdmin && !payment.getReservation().getUser().getEmail().equals(userEmail)) {
             throw new RuntimeException("You are not authorized to view this payment");
         }
 
-        return payment;
+        return toPaymentResponse(payment);
+    }
+
+    private PaymentResponse toPaymentResponse(Payment payment) {
+        Reservation reservation = payment.getReservation();
+
+        return new PaymentResponse(
+                payment.getId(),
+                reservation.getId(),
+                reservation.getParking() != null ? reservation.getParking().getId() : null,
+                reservation.getParking() != null ? reservation.getParking().getName() : null,
+                reservation.getUser() != null ? reservation.getUser().getId() : null,
+                reservation.getUser() != null ? reservation.getUser().getEmail() : null,
+                payment.getAmount(),
+                payment.getStatus().name()
+        );
     }
 }

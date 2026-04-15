@@ -1,5 +1,6 @@
 package com.parking.location.service;
 
+import com.parking.location.config.CurrencyConfig;
 import com.parking.location.dto.PaymentResponse;
 import com.parking.location.model.Payment;
 import com.parking.location.model.PaymentStatus;
@@ -52,9 +53,9 @@ public class PaymentService {
             throw new RuntimeException("Payment already completed for this reservation");
         }
 
-        // Calcul du montant : (Durée en heures) * (Prix par heure du parking)
-        long hours = Duration.between(reservation.getStartTime(), reservation.getEndTime()).toHours();
-        if (hours <= 0) hours = 1; // Au minimum 1h facturée
+        // Arrondi à l'heure supérieure pour aligner la facturation avec l'historique.
+        long minutes = Duration.between(reservation.getStartTime(), reservation.getEndTime()).toMinutes();
+        long hours = Math.max(1L, (long) Math.ceil(Math.max(0L, minutes) / 60.0));
 
         double totalAmount = hours * reservation.getParking().getPricePerHour();
 
@@ -96,6 +97,7 @@ public class PaymentService {
                 reservation.getUser() != null ? reservation.getUser().getId() : null,
                 reservation.getUser() != null ? reservation.getUser().getEmail() : null,
                 payment.getAmount(),
+                CurrencyConfig.CURRENCY_CODE,
                 payment.getStatus().name()
         );
     }

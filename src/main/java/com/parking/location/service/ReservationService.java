@@ -4,6 +4,7 @@ import com.parking.location.dto.ReservationHistoryResponse;
 import com.parking.location.dto.ReservationRequest;
 import com.parking.location.model.PaymentStatus;
 import com.parking.location.model.Parking;
+import com.parking.location.model.Payment;
 import com.parking.location.model.Reservation;
 import com.parking.location.model.ReservationStatus;
 import com.parking.location.model.User;
@@ -51,6 +52,15 @@ public class ReservationService {
 
         Parking parking = parkingRepository.findById(request.getParkingId())
                 .orElseThrow(() -> new RuntimeException("Parking not found"));
+
+        long overlappingReservations = reservationRepository.countOverlappingActiveReservations(
+                parking.getId(),
+                request.getStartTime(),
+                request.getEndTime()
+        );
+        if (overlappingReservations >= parking.getTotalSpots()) {
+            throw new RuntimeException("No available spots for this time slot");
+        }
 
         // Règle métier : Une place ne peut pas être réservée si elle est indisponible
         if (parking.getAvailableSpots() <= 0) {
@@ -136,6 +146,11 @@ public class ReservationService {
 
         if (reservation.getStatus() == ReservationStatus.CANCELLED) {
             throw new RuntimeException("Reservation is already cancelled");
+        }
+
+        Payment payment = paymentRepository.findByReservation_Id(reservationId).orElse(null);
+        if (payment != null && payment.getStatus() == PaymentStatus.PAID) {
+            throw new RuntimeException("Cannot cancel a reservation that is already paid");
         }
 
         // Marquer comme annulée

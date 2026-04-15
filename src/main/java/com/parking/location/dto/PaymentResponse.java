@@ -13,6 +13,7 @@ public class PaymentResponse {
     private Long userId;
     private String userEmail;
     private double amount;
+    private String currencyCode;
     private String status;
 }
 

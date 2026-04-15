@@ -8,6 +8,10 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import java.util.Optional;
 
@@ -22,6 +26,9 @@ public class DataInitializer implements CommandLineRunner {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private DataSource dataSource;
 
     @Override
     public void run(String... args) throws Exception {
@@ -60,25 +67,49 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void migrateReservationStatusColumn() {
+        if (!isMySql()) {
+            return;
+        }
+
         try {
             // Evite les erreurs MySQL ENUM quand les statuts Java evoluent (ACTIVE -> PENDING/CONFIRMED).
             jdbcTemplate.execute("ALTER TABLE reservations MODIFY COLUMN status VARCHAR(20)");
-        } catch (Exception ignored) {
-            // La migration est best-effort pour rester compatible avec des schemas differents.
+        } catch (Exception e) {
+            System.err.println("Migration status reservations non appliquee: " + e.getMessage());
         }
     }
 
     private void migrateUserActiveColumn() {
-        try {
-            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN active BIT(1) NOT NULL DEFAULT b'1'");
-        } catch (Exception ignored) {
-            // Si la colonne existe deja, on continue.
+        if (!columnExists("users", "active")) {
+            try {
+                jdbcTemplate.execute("ALTER TABLE users ADD COLUMN active BIT(1) NOT NULL DEFAULT b'1'");
+            } catch (Exception e) {
+                System.err.println("Migration colonne users.active non appliquee: " + e.getMessage());
+            }
         }
 
         try {
             jdbcTemplate.execute("UPDATE users SET active = b'1' WHERE active IS NULL");
-        } catch (Exception ignored) {
-            // Best-effort.
+        } catch (Exception e) {
+            System.err.println("Initialisation users.active impossible: " + e.getMessage());
+        }
+    }
+
+    private boolean isMySql() {
+        try (Connection connection = dataSource.getConnection()) {
+            String productName = connection.getMetaData().getDatabaseProductName();
+            return productName != null && productName.toLowerCase().contains("mysql");
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
+    private boolean columnExists(String tableName, String columnName) {
+        try (Connection connection = dataSource.getConnection();
+             ResultSet columns = connection.getMetaData().getColumns(null, null, tableName, columnName)) {
+            return columns.next();
+        } catch (SQLException e) {
+            return false;
         }
     }
 }

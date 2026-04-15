@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
@@ -18,6 +19,16 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     List<Reservation> findByUser(User user);
     List<Reservation> findByParkingId(Long parkingId);
     List<Reservation> findByUserOrderByStartTimeDescIdDesc(User user);
+    @Query("""
+            SELECT COUNT(r) FROM Reservation r
+            WHERE r.parking.id = :parkingId
+              AND r.status <> com.parking.location.model.ReservationStatus.CANCELLED
+              AND r.startTime < :endTime
+              AND r.endTime > :startTime
+            """)
+    long countOverlappingActiveReservations(@Param("parkingId") Long parkingId,
+                                            @Param("startTime") LocalDateTime startTime,
+                                            @Param("endTime") LocalDateTime endTime);
     long countByUser_Id(Long userId);
     long countByParkingId(Long parkingId);
     long deleteByUser_Id(Long userId);

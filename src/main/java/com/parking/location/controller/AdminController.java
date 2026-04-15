@@ -8,6 +8,9 @@ import com.parking.location.dto.StatisticsResponse;
 import com.parking.location.service.AdminExportService;
 import com.parking.location.model.Role;
 import com.parking.location.model.User;
+import com.parking.location.model.Parking;
+import com.parking.location.model.Reservation;
+import com.parking.location.model.ReservationStatus;
 import com.parking.location.repository.ParkingRepository;
 import com.parking.location.repository.PaymentRepository;
 import com.parking.location.repository.ReservationRepository;
@@ -19,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -140,6 +144,7 @@ public class AdminController {
 
     @DeleteMapping("/users/{id}")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<?> deleteUser(@PathVariable Long id, Authentication authentication) {
         User user = userRepository.findById(id).orElse(null);
         if (user == null) {
@@ -155,6 +160,7 @@ public class AdminController {
             return ResponseEntity.badRequest().body(new MessageResponse("User is already deactivated"));
         }
 
+        deactivateUserReservations(user);
         user.setActive(false);
         userRepository.save(user);
         return ResponseEntity.ok(new MessageResponse("User deactivated successfully"));
@@ -179,6 +185,7 @@ public class AdminController {
 
     @DeleteMapping("/users/{id}/permanent")
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<?> permanentlyDeleteUser(@PathVariable Long id, Authentication authentication) {
         User user = userRepository.findById(id).orElse(null);
         if (user == null) {
@@ -190,8 +197,31 @@ public class AdminController {
             return ResponseEntity.badRequest().body(new MessageResponse("You cannot permanently delete your own account"));
         }
 
+        deactivateUserReservations(user);
+        paymentRepository.deleteByReservation_User_Id(id);
+        reservationRepository.deleteByUser_Id(id);
         userRepository.delete(user);
         return ResponseEntity.ok(new MessageResponse("User permanently deleted successfully"));
+    }
+
+    private void deactivateUserReservations(User user) {
+        List<Reservation> reservations = reservationRepository.findByUser(user);
+        for (Reservation reservation : reservations) {
+            if (reservation.getStatus() == ReservationStatus.CANCELLED) {
+                continue;
+            }
+
+            reservation.setStatus(ReservationStatus.CANCELLED);
+
+            Parking parking = reservation.getParking();
+            if (parking != null) {
+                int updatedSpots = Math.min(parking.getTotalSpots(), parking.getAvailableSpots() + 1);
+                parking.setAvailableSpots(updatedSpots);
+                parkingRepository.save(parking);
+            }
+
+            reservationRepository.save(reservation);
+        }
     }
 
     @GetMapping("/reservations")

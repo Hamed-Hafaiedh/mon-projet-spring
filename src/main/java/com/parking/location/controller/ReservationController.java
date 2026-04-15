@@ -29,14 +29,6 @@ public class ReservationController {
         return ResponseEntity.ok(new MessageResponse("Reservation created successfully"));
     }
 
-    @GetMapping("/user")
-    public ResponseEntity<List<ReservationHistoryResponse>> getUserReservations() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userEmail = authentication.getName();
-        
-        List<ReservationHistoryResponse> reservations = reservationService.getUserReservations(userEmail);
-        return ResponseEntity.ok(reservations);
-    }
 
     @GetMapping("/me/history")
     public ResponseEntity<List<ReservationHistoryResponse>> getCurrentUserHistory() {

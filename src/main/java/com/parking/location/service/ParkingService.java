@@ -40,10 +40,20 @@ public class ParkingService {
         
         if (optionalParking.isPresent()) {
             Parking existingParking = optionalParking.get();
+            int previousTotalSpots = existingParking.getTotalSpots();
+
+            if (parkingDetails.getTotalSpots() < 0) {
+                throw new IllegalArgumentException("Le nombre total de places ne peut pas etre negatif");
+            }
+
+            int newTotalSpots = parkingDetails.getTotalSpots();
+            int deltaSpots = newTotalSpots - previousTotalSpots;
+            int adjustedAvailableSpots = existingParking.getAvailableSpots() + deltaSpots;
+
             existingParking.setName(parkingDetails.getName());
             existingParking.setLocation(parkingDetails.getLocation());
-            existingParking.setTotalSpots(parkingDetails.getTotalSpots());
-            existingParking.setAvailableSpots(parkingDetails.getAvailableSpots());
+            existingParking.setTotalSpots(newTotalSpots);
+            existingParking.setAvailableSpots(Math.max(0, Math.min(newTotalSpots, adjustedAvailableSpots)));
             existingParking.setPricePerHour(parkingDetails.getPricePerHour());
             validateParkingCoordinates(parkingDetails.getLatitude(), parkingDetails.getLongitude());
             existingParking.setLatitude(parkingDetails.getLatitude());

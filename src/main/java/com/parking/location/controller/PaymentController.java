@@ -1,5 +1,6 @@
 package com.parking.location.controller;
 
+import com.parking.location.dto.MessageResponse;
 import com.parking.location.dto.PaymentRequest;
 import com.parking.location.dto.PaymentResponse;
 import com.parking.location.service.PaymentService;
@@ -20,8 +21,15 @@ public class PaymentController {
     @PostMapping
     public ResponseEntity<?> makePayment(@RequestBody PaymentRequest paymentRequest) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userEmail = authentication.getName();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).body(new MessageResponse("Authentication required"));
+        }
 
+        if (paymentRequest == null || paymentRequest.getReservationId() == null) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Reservation id is required"));
+        }
+
+        String userEmail = authentication.getName();
         PaymentResponse payment = paymentService.processPayment(paymentRequest.getReservationId(), userEmail);
         return ResponseEntity.ok(payment);
     }
@@ -29,6 +37,10 @@ public class PaymentController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getPaymentDetails(@PathVariable Long id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).body(new MessageResponse("Authentication required"));
+        }
+
         String userEmail = authentication.getName();
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));

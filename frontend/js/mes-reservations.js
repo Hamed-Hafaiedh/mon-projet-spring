@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tableBody) tableBody.innerHTML = '';
 
         try {
-            const response = await fetch(`${API_URL}/reservations/user`, {
+            const response = await fetch(`${API_URL}/reservations/me/history`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
